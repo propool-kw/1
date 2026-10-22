@@ -528,7 +528,7 @@ html[dir="ltr"] .ba-item{direction:ltr;}
 .price-card{
   min-width:0;display:flex;flex-direction:column;
   padding:26px 20px;
-  background-color:#e4e0da;
+  background-color:#FFF4DE;
   border:1px solid rgb(79,100,221);border-radius:var(--radius-lg);
   transition:transform .5s var(--ease),box-shadow .5s;
 }
