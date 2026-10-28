@@ -72,7 +72,7 @@
   }
   /* ---------- Quick-jump bar: highlight the section in view ---------- */
   const jumpLinks = $$('#svcJump a[href^="#"]');
-  const cards = $$(".svc-item");
+  const cards = $$(".svc-item, .svc-article, #process, #care");
   function centerInJumpBar(link) {
     if (!jumpBar || jumpBar.scrollWidth <= jumpBar.clientWidth) return;
     const c = jumpBar.getBoundingClientRect();
@@ -103,7 +103,7 @@
     );
     cards.forEach((card) => observer.observe(card));
   }
-  // internal links (jump bar + footer): smooth scroll, offset handled by CSS scroll-margin-top
+  // internal links (jump bar + footer + cards): smooth scroll, offset handled by CSS scroll-margin-top
   $$('a[href^="#"]').forEach((a) => {
     a.addEventListener("click", (e) => {
       const id = a.getAttribute("href").slice(1);
@@ -133,4 +133,32 @@
     );
     cardVideos.forEach((v) => videoObserver.observe(v));
   }
+  /* ---------- Pause CSS animations while off-screen (يوفّر أداء الموبايل) ---------- */
+  if ("IntersectionObserver" in window) {
+    const animObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle("is-offscreen", !entry.isIntersecting);
+        });
+      },
+      { rootMargin: "100px 0px" }
+    );
+    $$(".pool-flow, .svc-item, .svc-care-block").forEach((el) => animObserver.observe(el));
+  }
+    /* ---------- WhatsApp buttons in service cards: prefill the service name ---------- */
+  $$('.svc-item .btn[href*="whatsapp"]').forEach((a) => {
+    const card = a.closest(".svc-item");
+    const titleEl = card && $("h3", card);
+    if (!titleEl) return;
+
+    const fill = () => {
+      const title = titleEl.textContent.trim();
+      const url = new URL(a.href);
+      url.searchParams.set("text", `مرحباً بروبول، أحتاج خدمة: ${title}`);
+      a.href = url.toString();
+    };
+
+    fill();                         // يتجهز أول ما الصفحة تفتح
+    a.addEventListener("click", fill); // ويتحدث وقت الضغط (لو العنوان اتغير)
+  });
 })();

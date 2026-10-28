@@ -1175,3 +1175,45 @@ a {
     font-size: 13px;
   }
 }
+/* =====================================================
+   ABOUT / COVERAGE SECTION (before footer)
+   ===================================================== */
+.svc-about {
+  padding: 56px 0;
+  background-color: #fff;
+  font-family: "Cairo", sans-serif;
+}
+.svc-about-inner {
+  width: min(900px, 100%);
+  margin-inline: auto;
+}
+.svc-about h2 {
+  margin-bottom: 18px;
+  color: #160d6b;
+  font-size: clamp(20px, 2.6vw, 28px);
+  font-weight: 800;
+  line-height: 1.6;
+  text-align: center;
+  text-wrap: balance;
+}
+.svc-about p {
+  margin: 0 0 14px;
+  color: #3b5568;
+  font-size: 15.5px;
+  line-height: 2;
+}
+.svc-about p:last-child {
+  margin-bottom: 0;
+  padding: 12px 16px;
+  border-inline-start: 4px solid #00b8d9;
+  border-radius: 6px;
+  background: rgb(0 184 217 / 8%);
+  color: #086288;
+  font-weight: 600;
+}
+@media (max-width: 860px) {
+  .svc-about { padding: 44px 0; }
+}
+@media (max-width: 600px) {
+  .svc-about p { font-size: 14.5px; }
+}

@@ -24,13 +24,6 @@ const galleryImgs = [
   'image/pool-8.webp',
   'image/pool-9.webp'
 ];
-const faqs = [
-  {q:{ar:'كم يستغرق بناء مسبح فاخر في الكويت؟',en:'How long does it take to build a luxury pool in Kuwait?'}, a:{ar:'تتراوح المدة عادة بين 6 إلى 10 أسابيع حسب حجم المسبح والتشطيبات المطلوبة والظروف الجوية.', en:'It typically takes 6 to 10 weeks depending on pool size, finishing requirements and weather conditions.'}},
-  {q:{ar:'هل تقدمون ضمانًا على أعمال الإنشاء؟',en:'Do you offer a warranty on construction work?'}, a:{ar:'نعم، نقدم ضمانًا شاملًا يغطي الهيكل الإنشائي والعزل والمعدات لمدة تصل إلى 10 سنوات.', en:'Yes, we offer a comprehensive warranty covering structure, waterproofing and equipment for up to 10 years.'}},
-  {q:{ar:'هل يمكنكم ترميم مسبح قديم بدلًا من إنشاء مسبح جديد؟',en:'Can you renovate an old pool instead of building a new one?'}, a:{ar:'بالتأكيد، لدينا فريق متخصص في ترميم المسابح القديمة وتحديث التشطيبات والأنظمة بالكامل.', en:'Absolutely, we have a dedicated team specialized in renovating old pools and fully upgrading finishes and systems.'}},
-  {q:{ar:'كيف تعمل خطط الصيانة الشهرية؟',en:'How do the monthly maintenance plans work?'}, a:{ar:'نقوم بزيارات دورية حسب الخطة المختارة تشمل فحص المياه، التنظيف، وصيانة المعدات مع تقرير دوري.', en:'We conduct scheduled visits per your chosen plan, including water testing, cleaning and equipment maintenance with regular reporting.'}},
-  {q:{ar:'هل تقدمون استشارة تصميم مجانية؟',en:'Do you offer a free design consultation?'}, a:{ar:'نعم، نوفر استشارة أولية مجانية لفهم احتياجاتك وتقديم مقترح تصميم مبدئي.', en:'Yes, we provide a free initial consultation to understand your needs and present an initial design proposal.'}}
-];
 /* ================= RENDER ================= */
 let currentLang = document.documentElement.lang || 'ar';
 function svgIcon(path){
@@ -46,28 +39,40 @@ function renderGallery(){
       <div class="g-overlay">${svgIcon('M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z')}</div>
     </div>`).join('');
 }
-function renderFaq(){
-  const list = document.getElementById('faqList');
-  if(!list) return;
-  list.innerHTML = faqs.map(f=>`
-    <div class="faq-item reveal">
-      <div class="faq-q"><span data-ar="${f.q.ar}" data-en="${f.q.en}">${currentLang==='ar'?f.q.ar:f.q.en}</span><div class="plus"></div></div>
-      <div class="faq-a"><p data-ar="${f.a.ar}" data-en="${f.a.en}">${currentLang==='ar'?f.a.ar:f.a.en}</p></div>
-    </div>`).join('');
-  list.querySelectorAll('.faq-q').forEach(q=>{
-    q.addEventListener('click',()=>{
-      const item = q.parentElement;
-      const wasOpen = item.classList.contains('open');
-      list.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
-      if(!wasOpen) item.classList.add('open');
-    });
-  });
-}
 function renderAll(){
   renderGallery();
-  renderFaq();
   observeReveal();
   bindLightbox();
+}
+/* ================= FAQ (الأسئلة مكتوبة في الـ HTML للسيو) ================= */
+// فتح وقفل الأسئلة (event delegation: يشتغل مرة واحدة على القائمة كلها)
+function bindFaq(){
+  const list = document.getElementById('faqList');
+  if(!list) return;
+  list.addEventListener('click', e=>{
+    const q = e.target.closest('.faq-q');
+    if(!q) return;
+    const item = q.parentElement;
+    const wasOpen = item.classList.contains('open');
+    list.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+    if(!wasOpen) item.classList.add('open');
+  });
+}
+// يبني سكيما FAQPage تلقائيًا من الأسئلة الموجودة في الصفحة (بالعربي)
+function injectFaqSchema(){
+  const items = [...document.querySelectorAll('#faqList .faq-item')].map(item=>({
+    "@type":"Question",
+    "name":item.querySelector('.faq-q span').getAttribute('data-ar'),
+    "acceptedAnswer":{"@type":"Answer","text":item.querySelector('.faq-a p').getAttribute('data-ar')}
+  }));
+  if(!items.length) return;
+  const s = document.createElement('script');
+  s.type = 'application/ld+json';
+  s.textContent = JSON.stringify({
+    "@context":"https://schema.org","@type":"FAQPage",
+    "@id":"https://propool-kw.com/#faq","inLanguage":"ar","mainEntity":items
+  });
+  document.head.appendChild(s);
 }
 /* ================= I18N ================= */
 function applyLang(lang){
@@ -418,5 +423,7 @@ if(document.readyState === 'loading'){
 }
 setTimeout(hidePreloader, 2500);  // أمان: يختفي بعد 2.5 ثانية على الأكتر مهما حصل
 /* ================= INIT ================= */
+bindFaq();
+injectFaqSchema();
 applyLang(store.get('propool-lang') || document.documentElement.lang || 'ar');
 applyTheme(store.get('propool-theme') || 'light');
