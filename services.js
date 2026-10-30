@@ -1,7 +1,7 @@
 /* =====================================================
    PROPOOL — Services Page
    File: services.js
-   (standalone: لا يحتاج script.js في هذه الصفحة)
+   (standalone: no other script needed on this page)
    ===================================================== */
 (() => {
   "use strict";
@@ -15,7 +15,7 @@
   const mobileQuery = window.matchMedia("(max-width: 1024px)");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const scrollBehavior = () => (reduceMotion.matches ? "auto" : "smooth");
-  /* ---------- Mobile menu ---------- */
+  /* ---------- 1) Mobile menu ---------- */
   function setMenu(open) {
     if (!menu || !navLinks) return;
     navLinks.classList.toggle("open", open);
@@ -42,16 +42,12 @@
     // reset when switching to desktop width
     mobileQuery.addEventListener("change", () => setMenu(false));
   }
-  /* ---------- Scroll: nav shadow + back-to-top ---------- */
+  /* ---------- 2) Scroll: nav shadow + back-to-top ---------- */
   let ticking = false;
   function onScroll() {
     const y = window.scrollY || document.documentElement.scrollTop;
     if (nav) nav.classList.toggle("scrolled", y > 10);
-    if (backTop) {
-      const show = y > 400;
-      backTop.classList.toggle("is-visible", show);
-      backTop.classList.toggle("show", show);
-    }
+    if (backTop) backTop.classList.toggle("is-visible", y > 400);
     ticking = false;
   }
   window.addEventListener(
@@ -70,9 +66,9 @@
       window.scrollTo({ top: 0, behavior: scrollBehavior() });
     });
   }
-  /* ---------- Quick-jump bar: highlight the section in view ---------- */
+  /* ---------- 3) Quick-jump bar: highlight the section in view ---------- */
   const jumpLinks = $$('#svcJump a[href^="#"]');
-  const cards = $$(".svc-item, .svc-article, #process, #care");
+  const sections = $$(".svc-item, #process, #care");
   function centerInJumpBar(link) {
     if (!jumpBar || jumpBar.scrollWidth <= jumpBar.clientWidth) return;
     const c = jumpBar.getBoundingClientRect();
@@ -92,8 +88,8 @@
       }
     });
   }
-  if ("IntersectionObserver" in window && cards.length) {
-    const observer = new IntersectionObserver(
+  if ("IntersectionObserver" in window && sections.length) {
+    const sectionObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) setActive(entry.target.id);
@@ -101,9 +97,9 @@
       },
       { rootMargin: "-30% 0px -55% 0px" }
     );
-    cards.forEach((card) => observer.observe(card));
+    sections.forEach((s) => sectionObserver.observe(s));
   }
-  // internal links (jump bar + footer + cards): smooth scroll, offset handled by CSS scroll-margin-top
+  /* ---------- 4) Internal links: smooth scroll (offset via CSS scroll-margin-top) ---------- */
   $$('a[href^="#"]').forEach((a) => {
     a.addEventListener("click", (e) => {
       const id = a.getAttribute("href").slice(1);
@@ -114,7 +110,7 @@
       history.replaceState(null, "", "#" + id);
     });
   });
-  /* ---------- Card videos: play only while visible ---------- */
+  /* ---------- 5) Card videos: play only while visible ---------- */
   const cardVideos = $$(".svc-image video");
   if (cardVideos.length && "IntersectionObserver" in window && !reduceMotion.matches) {
     const videoObserver = new IntersectionObserver(
@@ -133,7 +129,7 @@
     );
     cardVideos.forEach((v) => videoObserver.observe(v));
   }
-  /* ---------- Pause CSS animations while off-screen (يوفّر أداء الموبايل) ---------- */
+  /* ---------- 6) Pause CSS animations while off-screen (saves mobile battery) ---------- */
   if ("IntersectionObserver" in window) {
     const animObserver = new IntersectionObserver(
       (entries) => {
@@ -145,20 +141,55 @@
     );
     $$(".pool-flow, .svc-item, .svc-care-block").forEach((el) => animObserver.observe(el));
   }
-    /* ---------- WhatsApp buttons in service cards: prefill the service name ---------- */
+  /* ---------- 7) WhatsApp buttons in service cards: prefill the service name ---------- */
   $$('.svc-item .btn[href*="whatsapp"]').forEach((a) => {
     const card = a.closest(".svc-item");
     const titleEl = card && $("h3", card);
     if (!titleEl) return;
-
     const fill = () => {
       const title = titleEl.textContent.trim();
       const url = new URL(a.href);
       url.searchParams.set("text", `مرحباً بروبول، أحتاج خدمة: ${title}`);
       a.href = url.toString();
     };
-
-    fill();                         // يتجهز أول ما الصفحة تفتح
-    a.addEventListener("click", fill); // ويتحدث وقت الضغط (لو العنوان اتغير)
+    fill();                            // ready as soon as the page opens
+    a.addEventListener("click", fill); // refreshed again on click
   });
 })();
+/* ================= PROMO POPUP + BUBBLE ================= */
+document.addEventListener('DOMContentLoaded', function(){
+  const PROMO_KEY = 'propool-promo-seen';
+  const PROMO_DELAY = 6000;          // ظهور النافذة (ملي ثانية)
+  const BUBBLE_DELAY = 2500;         // ظهور الفقاعة لمن شاف العرض قبل كده
+  const RESHOW_EACH_VISIT = false;   // true = النافذة تظهر مع كل زيارة جديدة
+  const promo  = document.getElementById('promo');
+  const bubble = document.getElementById('promoBubble');
+  if(!promo || !bubble) return;
+  const msg = 'مرحبًا بروبول، شفت عرض خصم 10% على أول زيارة صيانة وأرغب في الاستفادة منه.';
+  document.getElementById('promoCta').href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
+  let sessionSeen = false;
+  try{ sessionSeen = !!sessionStorage.getItem(PROMO_KEY); }catch(e){}
+  function showBubble(){ bubble.hidden = false; requestAnimationFrame(()=>bubble.classList.add('show')); }
+  function hideBubble(){ bubble.classList.remove('show'); setTimeout(()=>{ bubble.hidden = true; }, 400); }
+  function openPromo(){
+    hideBubble();
+    promo.hidden = false;
+    requestAnimationFrame(()=>promo.classList.add('show'));
+  }
+  function closePromo(){
+    promo.classList.remove('show');
+    setTimeout(()=>{ promo.hidden = true; }, 300);
+    store.set(PROMO_KEY, '1');
+    try{ sessionStorage.setItem(PROMO_KEY, '1'); }catch(e){}
+    showBubble();
+  }
+  const seenBefore = !!store.get(PROMO_KEY);
+  const autoOpen = !seenBefore || (RESHOW_EACH_VISIT && !sessionSeen);
+  if(autoOpen) setTimeout(openPromo, PROMO_DELAY);
+  else setTimeout(showBubble, BUBBLE_DELAY);
+  bubble.addEventListener('click', openPromo);
+  document.getElementById('promoClose').addEventListener('click', closePromo);
+  document.getElementById('promoCta').addEventListener('click', closePromo);
+  promo.addEventListener('click', e=>{ if(e.target === promo) closePromo(); });
+  document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && !promo.hidden) closePromo(); });
+});
